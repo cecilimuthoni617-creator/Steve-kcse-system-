@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101522">
+<title>KCSE COMMAND</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101522;color:#f3f5ff;font-family:Arial,sans-serif}
+header{background:#192337;padding:22px 16px;border-bottom:2px solid #55d6be}
+h1{margin:0;color:#55d6be;font-size:25px}
+header p{color:#b8c4d9;margin-bottom:0}
+main{padding:16px;max-width:650px;margin:auto}
+.card{background:#1b263b;border:1px solid #34445f;border-radius:14px;padding:16px;margin:14px 0}
+h2{font-size:18px;margin-top:0}
+.stat{display:flex;justify-content:space-between;margin:10px 0}
+button,select,input{font-size:16px;padding:11px;border-radius:8px;border:1px solid #52627e}
+button{background:#55d6be;color:#10202a;font-weight:bold;border:0;cursor:pointer}
+select,input{background:#101522;color:white;max-width:100%}
+.full{width:100%;margin-top:8px}
+.subjects{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.subject{background:#283650;color:white;border:1px solid #465875;padding:12px 5px}
+.subject.active{background:#55d6be;color:#10202a}
+.small{font-size:13px;color:#b8c4d9}
+progress{width:100%;height:15px;accent-color:#55d6be}
+.task{padding:10px 0;border-bottom:1px solid #34445f}
+.task label{display:flex;gap:9px;align-items:flex-start}
+.task input{margin-top:3px}
+nav{display:flex;gap:7px;flex-wrap:wrap}
+nav button{flex:1}
+footer{text-align:center;color:#9eacc4;padding:20px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+<h1>⚔ KCSE COMMAND</h1>
+<p>Train daily. Master every paper. Earn your rank.</p>
+</header>
+<main>
+<section class="card">
+<h2>MISSION CONTROL</h2>
+<div class="stat"><span>KCSE countdown</span><strong id="days">Set date</strong></div>
+<label for="exam">KCSE start date:</label><br>
+<input id="exam" type="date" class="full">
+<div class="stat"><span>COMMAND XP</span><strong id="xp">0 XP</strong></div>
+<div class="stat"><span>Current rank</span><strong id="rank">Recruit</strong></div>
+<progress id="bar" value="0" max="100"></progress>
+<p class="small" id="next">Complete missions to earn XP.</p>
+</section>
+<section class="card">
+<h2>SELECT SUBJECT</h2>
+<div class="subjects" id="subjects"></div>
+<p class="small">Choose a subject to load its mission list.</p>
+</section>
+<section class="card">
+<h2 id="missionTitle">TODAY'S MISSIONS</h2>
+<div class="stat"><span>Completed</span><strong id="done">0 / 0</strong></div>
+<div id="tasks"></div>
+<button class="full" id="reset">Reset today's missions</button>
+</section>
+<section class="card">
+<h2>QUICK COMMAND</h2>
+<label for="custom">Add your own mission:</label>
+<input id="custom" class="full" placeholder="e.g. Revise linear motion">
+<button class="full" id="add">Add mission</button>
+<button class="full" id="export">Export my progress</button>
+<p class="small">Progress is saved on this device. Export backups regularly.</p>
+</section>
+<footer>KCSE COMMAND • OFFLINE-FIRST STUDY SYSTEM</footer>
+</main>
+<script>
+const subjects=["Mathematics","English","Kiswahili","Physics","Chemistry","Geography","CRE"];
+const defaults={
+"Mathematics":["Revise a difficult topic","Solve 10 exam questions","Mark and correct mistakes"],
+"English":["Practise comprehension","Revise grammar or functional writing","Practise literature questions"],
+"Kiswahili":["Soma sarufi","Fanya maswali ya ufahamu","Jizoeze insha au fasihi"],
+"Physics":["Revise one topic and formulas","Solve numerical questions","Mark a past-paper section"],
+"Chemistry":["Revise one topic","Practise equations or calculations","Mark a past-paper section"],
+"Geography":["Revise one topic and diagrams","Practise structured questions","Review mapwork or fieldwork"],
+"CRE":["Revise one theme or topic","Answer structured questions","Review key teachings and examples"]
+};
+const key="kcse-command-v1";
+let data;
+try{data=JSON.parse(localStorage.getItem(key))||{};}catch(e){data={};}
+data.xp=data.xp||0;
+data.selected=data.selected||"Mathematics";
+data.completed=data.completed||{};
+data.custom=data.custom||{};
+function save(){localStorage.setItem(key,JSON.stringify(data));}
+function dayKey(){let d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
+function tasksFor(s){let k=dayKey()+"|"+s;if(!data.completed[k])data.completed[k]=[];if(!data.custom[k])data.custom[k]=[];return [...defaults[s],...data.custom[k]];}
+function renderSubjects(){
+let el=document.getElementById("subjects");el.innerHTML="";
+subjects.forEach(s=>{let b=document.createElement("button");b.textContent=s;b.className="subject"+(s===data.selected?" active":"");b.onclick=()=>{data.selected=s;save();render();};el.appendChild(b);});
+}
+function renderTasks(){
+let s=data.selected,ts=tasksFor(s),k=dayKey()+"|"+s;
+document.getElementById("missionTitle").textContent=s.toUpperCase()+" MISSIONS";
+document.getElementById("tasks").innerHTML="";
+ts.forEach((t,i)=>{
+let div=document.createElement("div");div.className="task";
+let label=document.createElement("label"),cb=document.createElement("input"),span=document.createElement("span");
+cb.type="checkbox";cb.checked=data.completed[k].includes(i);
+cb.onchange=()=>{if(cb.checked){if(!data.completed[k].includes(i)){data.completed[k].push(i);data.xp+=25;}}else{data.completed[k]=data.completed[k].filter(n=>n!==i);data.xp=Math.max(0,data.xp-25);}save();render();};
+span.textContent=t;label.append(cb,span);div.appendChild(label);document.getElementById("tasks").appendChild(div);
+});
+document.getElementById("done").textContent=data.completed[k].length+" / "+ts.length;
+}
+function render(){
+renderSubjects();renderTasks();
+document.getElementById("xp").textContent=data.xp+" XP";
+let ranks=["Recruit","Cadet","Warrior","Elite","Commander","KCSE Legend"],levels=[0,100,300,600,1000,1500],r=0;
+for(let i=0;i<levels.length;i++)if(data.xp>=levels[i])r=i;
+document.getElementById("rank").textContent=ranks[r];
+let target=levels[Math.min(r+1,levels.length-1)];
+document.getElementById("bar").value=r===ranks.length-1?100:Math.min(100,(data.xp-levels[r])/(target-levels[r])*100);
+document.getElementById("next").textContent=r===ranks.length-1?"Maximum rank reached!":(target-data.xp)+" XP to "+ranks[r+1]+".";
+let exam=document.getElementById("exam");
+if(data.exam&&!exam.value)exam.value=data.exam;
+if(exam.value){let n=Math.ceil((new Date(exam.value+"T00:00:00")-new Date(new Date().toDateString()))/86400000);document.getElementById("days").textContent=n>=0?n+" days": "Date passed";}else document.getElementById("days").textContent="Set date";
+}
+document.getElementById("exam").onchange=e=>{data.exam=e.target.value;save();render();};
+document.getElementById("add").onclick=()=>{let input=document.getElementById("custom"),v=input.value.trim();if(!v)return;let k=dayKey()+"|"+data.selected;data.custom[k]=data.custom[k]||[];data.custom[k].push(v);input.value="";save();render();};
+document.getElementById("reset").onclick=()=>{if(confirm("Reset mission checkboxes for this subject today? XP already earned stays.")){data.completed[dayKey()+"|"+data.selected]=[];save();render();}};
+document.getElementById("export").onclick=()=>{let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="kcse-command-progress.json";a.click();URL.revokeObjectURL(url);};
+render();
+</script>
+</body>
+</html>
