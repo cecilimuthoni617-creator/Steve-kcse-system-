@@ -1,0 +1,13 @@
+
+{
+  "name": "KCSE COMMAND",
+  "short_name": "KCSE",
+  "description": "Offline KCSE revision and study tracker",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101522",
+  "theme_color": "#192337",
+  "orientation": "portrait",
+  "icons": []
+}
