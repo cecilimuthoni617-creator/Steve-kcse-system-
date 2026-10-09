@@ -1,0 +1,57 @@
+
+name: Build KCSE COMMAND APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/build-apk.yml'
+      - 'index.html'
+      - 'manifest.json'
+      - 'sw.js'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get project files
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Prepare Android project
+        run: |
+          mkdir www
+          cp index.html www/
+          cp manifest.json www/
+          cp sw.js www/
+          npm init -y
+          npm install @capacitor/core@7 @capacitor/android@7
+          npm install --save-dev @capacitor/cli@7
+          echo '{"appId":"com.kcsecommand.app","appName":"KCSE COMMAND","webDir":"www"}' > capacitor.config.json
+          npx cap add android
+          npx cap sync android
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Save APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: KCSE-COMMAND-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          
